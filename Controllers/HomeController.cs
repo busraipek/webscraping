@@ -20,7 +20,7 @@ namespace webscraping.Controllers
             var flightDataList = new List<FlightData>();
 
             var web = new HtmlWeb();
-            var doc = web.Load("https://www.avionio.com/en/airport/saw/departures?ts=1714212000000");
+            var doc = web.Load("https://www.avionio.com/en/airport/saw/departures?ts=1714096800000");
 
             var rows = doc.DocumentNode.SelectNodes("//tr[@class='tt-row ']");
 
@@ -48,34 +48,58 @@ namespace webscraping.Controllers
 
         private void ExportToExcel(List<FlightData> flightDataList)
         {
-            // Create Excel package
-            var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Flight Data");
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "FlightData.xlsx");
 
-            // Add headers
-            worksheet.Cells["A1"].Value = "Time";
-            worksheet.Cells["B1"].Value = "Date";
-            worksheet.Cells["C1"].Value = "IATA";
-            worksheet.Cells["D1"].Value = "Destination";
-            worksheet.Cells["E1"].Value = "Flight";
-            worksheet.Cells["F1"].Value = "Airline";
-            worksheet.Cells["G1"].Value = "Status";
+            // Check if the file exists
+            FileInfo file = new FileInfo(filePath);
+            ExcelPackage package;
+            if (file.Exists)
+            {
+                // If the file exists, load it
+                using (var stream = new FileStream(filePath, FileMode.Open))
+                {
+                    package = new ExcelPackage(stream);
+                }
+            }
+            else
+            {
+                // If the file doesn't exist, create a new package
+                package = new ExcelPackage();
+            }
+
+            // Get the worksheet or create a new one if it doesn't exist
+            var worksheet = package.Workbook.Worksheets.FirstOrDefault(ws => ws.Name == "Flight Data");
+            if (worksheet == null)
+            {
+                worksheet = package.Workbook.Worksheets.Add("Flight Data");
+
+                // Add headers if the worksheet is newly created
+                worksheet.Cells["A1"].Value = "Time";
+                worksheet.Cells["B1"].Value = "Date";
+                worksheet.Cells["C1"].Value = "IATA";
+                worksheet.Cells["D1"].Value = "Destination";
+                worksheet.Cells["E1"].Value = "Flight";
+                worksheet.Cells["F1"].Value = "Airline";
+                worksheet.Cells["G1"].Value = "Status";
+            }
+
+            // Find the last used row
+            int startRow = worksheet.Dimension.End.Row + 1;
 
             // Add data
             for (int i = 0; i < flightDataList.Count; i++)
             {
                 var flight = flightDataList[i];
-                worksheet.Cells[i + 2, 1].Value = flight.Time;
-                worksheet.Cells[i + 2, 2].Value = flight.Date;
-                worksheet.Cells[i + 2, 3].Value = flight.IATA;
-                worksheet.Cells[i + 2, 4].Value = flight.Destination;
-                worksheet.Cells[i + 2, 5].Value = flight.Flight;
-                worksheet.Cells[i + 2, 6].Value = flight.Airline;
-                worksheet.Cells[i + 2, 7].Value = flight.Status;
+                worksheet.Cells[startRow + i, 1].Value = flight.Time;
+                worksheet.Cells[startRow + i, 2].Value = flight.Date;
+                worksheet.Cells[startRow + i, 3].Value = flight.IATA;
+                worksheet.Cells[startRow + i, 4].Value = flight.Destination;
+                worksheet.Cells[startRow + i, 5].Value = flight.Flight;
+                worksheet.Cells[startRow + i, 6].Value = flight.Airline;
+                worksheet.Cells[startRow + i, 7].Value = flight.Status;
             }
 
-            // Save the Excel package to a file
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "FlightData.xlsx");
+            // Save the Excel package to the file
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 package.SaveAs(stream);
