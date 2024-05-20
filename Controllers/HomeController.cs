@@ -20,7 +20,11 @@ namespace webscraping.Controllers
             var flightDataList = new List<FlightData>();
 
             var web = new HtmlWeb();
-            var doc = web.Load("https://www.avionio.com/en/airport/saw/departures?ts=1714096800000");
+            var doc = web.Load("https://www.avionio.com/en/airport/saw/departures");
+            //30 nisan https://www.avionio.com/en/airport/saw/departures?ts=1714492800000 saat 19.00
+            //29 nisan https://www.avionio.com/en/airport/saw/departures?ts=1714406400000
+            //28 nisan https://www.avionio.com/en/airport/saw/departures?ts=1714320000000
+            //27 nisan https://www.avionio.com/en/airport/saw/departures?ts=1714233600000
 
             var rows = doc.DocumentNode.SelectNodes("//tr[@class='tt-row ']");
 
